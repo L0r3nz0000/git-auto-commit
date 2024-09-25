@@ -57,6 +57,7 @@
   "C_Cpp_Runner.useLinkTimeOptimization": false,
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
-    "requests.h": "c"
+    "requests.h": "c",
+    "in.h": "c"
   }
 }

@@ -19,13 +19,13 @@ The types should be one of:\
 The body will explain the code change. Body will be formatted in well structured beautifully rendered and use relevant emojis\
 if no code changes are detected, you will reply with no code change detected message.";
 
-  char* host = "api.replicate.com";
-  char* endpoint = "/v1/models/meta/meta-llama-3-70b-instruct/predictions";
-  char* headers[] = {};
-  char* data[] = {};
+  char* host = "google.com";
+  char* endpoint = "/search?q=gatti";
+  Headers headers;
 
-  char response[4096];
-  post(host, endpoint, headers, 0, data, 0, response);
+  char *response = get(host, endpoint, headers);
+
+  //printf("%s", response);
 
   return 0;
 }

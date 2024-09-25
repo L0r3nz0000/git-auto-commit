@@ -6,70 +6,27 @@
 #include <netinet/in.h> /* struct sockaddr_in, struct sockaddr */
 #include <netdb.h> /* struct hostent, gethostbyname */
 
-typedef struct {
-  char *name;
-  char *value;
-} Header;
-
-typedef struct {
-  Header *headers;
-  int size;
-} Headers;
-
-typedef Header _Data;
-typedef struct {
-  _Data *data;
-  int size;
-} Data;
-
 void error(const char *msg) { perror(msg); exit(0); }
 
-void add_header(Headers headers, Header header) {
-    // Alloca la memoria per il nuovo header
-    if (headers.size == 0) {
-        headers.headers = malloc(sizeof(Headers));
-    } else {
-        headers.headers = realloc(headers.headers, sizeof(Header) * (headers.size+1));
-    }
-
-    headers.headers[headers.size] = header;
-    headers.size ++;
-}
-
-char *post(char* host, char* endpoint, Headers headers) {
-    return _request(host, endpoint, headers, "POST");
-}
-
-char *get(char* host, char* endpoint, Headers headers) {
-    return _request(host, endpoint, headers, "GET");
-
-}
-
-// TODO: implementare funzione per l asequnza di fibonacci
-
-char *_request(char* host, char* endpoint, Headers headers, char* method) {
+int main(int argc,char *argv[])
+{
     /* first what are we going to send and where are we going to send it? */
     int portno =        80;
-    char *message_fmt = "%s %s HTTP/1.0\r\n\r\n";
+    char *host =        "www.google.com";
+    char *message_fmt = "GET /search?q=gatti HTTP/1.0\r\n\r\n";
 
     struct hostent *server;
     struct sockaddr_in serv_addr;
     int sockfd, bytes, sent, received, total;
-    char message[1024];
-
-    /* Initial size of response buffer */
-    int response_size = 1024;
-    char *response = (char *)malloc(response_size);
-    if (response == NULL) {
-        error("ERROR allocating memory for response");
-    }
+    char message[1024],response[65536];
 
     /* fill in the parameters */
-    sprintf(message, message_fmt, method, endpoint);
+    sprintf(message,message_fmt);
     printf("Request:\n%s\n",message);
 
     /* create the socket */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    printf("socket opened\n");
     if (sockfd < 0) error("ERROR opening socket");
 
     /* lookup the ip address */
@@ -80,7 +37,6 @@ char *_request(char* host, char* endpoint, Headers headers, char* method) {
     memset(&serv_addr,0,sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(portno);
-    
     memcpy(&serv_addr.sin_addr.s_addr, server->h_addr_list[0], server->h_length);
 
     /* connect the socket */
@@ -90,6 +46,7 @@ char *_request(char* host, char* endpoint, Headers headers, char* method) {
     /* send the request */
     total = strlen(message);
     sent = 0;
+    printf("Sending request...\n");
     do {
         bytes = write(sockfd,message+sent,total-sent);
         if (bytes < 0)
@@ -100,33 +57,17 @@ char *_request(char* host, char* endpoint, Headers headers, char* method) {
     } while (sent < total);
 
     /* receive the response */
+    memset(response,0,sizeof(response));
+    total = sizeof(response)-1;
     received = 0;
     do {
-        /* Expand the buffer if necessary */
-        if (received + 512 >= response_size) {
-            response_size *= 2;
-            response = (char *)realloc(response, response_size);
-            if (response == NULL) {
-                error("ERROR reallocating memory for response");
-            }
-        }
-
-        bytes = read(sockfd, response + received, 512);
+        bytes = read(sockfd,response+received,total-received);
         if (bytes < 0)
             error("ERROR reading response from socket");
         if (bytes == 0)
             break;
-        received += bytes;
-    } while (1);
-
-    /* Null-terminate the response */
-    response[received] = '\0';
-
-    /* close the socket */
-    close(sockfd);
-
-    /* process response */
-    printf("Response:\n%s\n", response);
+        received+=bytes;
+    } while (received < total);
 
     /*
      * if the number of received bytes is the total size of the
@@ -135,6 +76,12 @@ char *_request(char* host, char* endpoint, Headers headers, char* method) {
      */
     if (received == total)
         error("ERROR storing complete response from socket");
-    
-    return response;
+
+    /* close the socket */
+    close(sockfd);
+
+    /* process response */
+    printf("Response:\n%s\n",response);
+
+    return 0;
 }
