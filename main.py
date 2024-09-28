@@ -15,7 +15,7 @@ if __name__ == "__main__":
   if args.model_name:
     model = args.model_name
   else:
-    model = "meta/meta-llama-3.1-405b-instruct"
+    model = "meta/meta-llama-3-70b-instruct"
     
   
   changes = subprocess.run(['git', 'diff', '--staged'], stdout=subprocess.PIPE).stdout.decode('utf-8')
