@@ -1,15 +1,8 @@
 import replicate
 import argparse
+import subprocess
 
-system_prompt = """You will examine and explain the given code changes and write a commit message in Conventional Commits format.
-The first line of the commit message should be a 20 word Title summary include a type, optional scope, subject in text, seperated by a newline and the following body.
-The types should be one of:
-\t- fix: for a bug fix
-\t- feat: for a new feature
-\t- perf: for a performance improvement
-\t- revert: to revert a previous commit
-The body will explain the code change. Body will be formatted in well structured beautifully rendered and use relevant emojis
-if no code changes are detected, you will reply with no code change detected message."""
+system_prompt = "Generate a concise git commit message that summarizes the key changes. Stay high-level and combine smaller changes to overarching topics. Skip describing any reformatting changes, write the message between <message></message> tags and if there are no changes, don't make up a message, just write 'no changes'"
 
 parser = argparse.ArgumentParser(
                     prog='git auto commit',
@@ -23,19 +16,45 @@ if __name__ == "__main__":
     model = args.model_name
   else:
     model = "meta/meta-llama-3.1-405b-instruct"
+    
   
-  input = {
-      'stream': True,
-      'input': {
-          'top_p': 0.9,
-          'prompt': '',
-          'min_tokens': 0,
-          'temperature': 0.6,
-          'prompt_template': '<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n' + system_prompt + '<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n',
-          'presence_penalty': 1.15
-      },
-      'system_prompt': system_prompt
+  changes = subprocess.run(['git', 'diff', '--staged'], stdout=subprocess.PIPE).stdout.decode('utf-8')
+  
+  prompt = {
+    "prompt": changes,
+    "max_tokens": 200,
+    "system_prompt": system_prompt
   }
   
-  for event in replicate.stream(model, input=input):
-    print(str(event), end="", flush=True)
+  message = ""
+  print("Thinking... ⌛")
+  
+  for event in replicate.stream(model, input=prompt):
+    message += str(event)
+  message = message.strip()
+  
+  if message.lower() == "no changes":
+    print("No changes detected. ✅")
+    exit(0)
+  
+  if "<message>" in message:
+    message = message[message.find("<message>") + len("<message>"):]
+  else:
+    print("Errore nella generazione del messaggio. ❌")
+    exit(1)
+  if message.endswith("</message>"):
+    message = message[:message.find("</message>")]
+  else:
+    print("Errore nella generazione del messaggio. ❌")
+    exit(1)
+  
+  print(message)
+  print("Enter: accept message and commit, Ctrl-C: close without committing.")
+
+  try:
+    input()
+  except KeyboardInterrupt:
+    print("Operation aborted. ❌")
+    exit(0)
+    
+  subprocess.run(['git', 'commit', '-m', message])
