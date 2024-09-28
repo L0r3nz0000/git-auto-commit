@@ -1,7 +1,7 @@
 #include "requests.c"
 
-char *post(char* host, char* endpoint, Headers headers);
-char *get(char* host, char* endpoint, Headers headers);
-char *_request(char* host, char* endpoint, Headers headers, char* method);
-void add_header(Headers h, Header);
+Response *post(char* host, char* endpoint, Headers headers, int port);
+Response *get(char* host, char* endpoint, Headers headers, int port);
+Response *_request(char* host, char* endpoint, Headers headers, char* method, int port);
+void add_header(Headers *headers, Header header);
 void error(const char *msg);

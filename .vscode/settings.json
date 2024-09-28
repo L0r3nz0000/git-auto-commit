@@ -58,6 +58,7 @@
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
     "requests.h": "c",
-    "in.h": "c"
+    "in.h": "c",
+    "stdio.h": "c"
   }
 }
