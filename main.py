@@ -58,3 +58,14 @@ if __name__ == "__main__":
     exit(0)
     
   subprocess.run(['git', 'commit', '-m', message])
+  
+  print("Do you want to push? (Y/n)")
+  
+  try:
+    i = input()
+    
+    if i.lower() == "y" or i == "":
+      subprocess.run(['git', 'push'])
+  except KeyboardInterrupt:
+    print("Operation aborted. ❌")
+    exit(0)
