@@ -40,9 +40,9 @@ if __name__ == "__main__":
   if "<message>" in message:
     message = message[message.find("<message>") + len("<message>"):]
   else:
-    print("Errore nella generazione del messaggio. ❌")
+    print("No changes detected. ✅")
     exit(1)
-  if message.endswith("</message>"):
+  if "</message>" in message:
     message = message[:message.find("</message>")]
   else:
     print("Errore nella generazione del messaggio. ❌")
